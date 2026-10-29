@@ -6,6 +6,8 @@ export interface Seen {
   url: string;
   headers: http.IncomingHttpHeaders;
   body: string;
+  /** The exact bytes, for binary uploads (body is decoded as UTF-8 text). */
+  rawBody: Buffer;
 }
 
 export interface TestServer {
@@ -31,7 +33,8 @@ export const startServer = async (): Promise<TestServer> => {
     const chunks: Buffer[] = [];
     req.on("data", (chunk) => chunks.push(chunk));
     req.on("end", () => {
-      const entry: Seen = { method: req.method ?? "", url: req.url ?? "", headers: req.headers, body: Buffer.concat(chunks).toString("utf8") };
+      const raw = Buffer.concat(chunks);
+      const entry: Seen = { method: req.method ?? "", url: req.url ?? "", headers: req.headers, body: raw.toString("utf8"), rawBody: raw };
       seen.push(entry);
       handler(req, res, entry);
     });

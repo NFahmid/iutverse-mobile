@@ -48,11 +48,25 @@ Details, evidence and blockers: [phase-c-progress.md](phase-c-progress.md). Summ
 | Live and staging smoke tests | Harness done; see the progress doc for what ran |
 | Envelope/error/pagination unification, P1 body schemas | Deferred |
 
+## Section D (Phase 1.2): implemented, gate D1 BLOCKED
+
+Details, findings and evidence: [phase-d-progress.md](phase-d-progress.md).
+
+| Area | Status |
+|---|---|
+| Absolute https base URL, native compatibility review | Done; React Native runtime items are assumptions |
+| Media URL rules and resolver | Done |
+| Direct uploads, signed downloads, expiry, retries | Done in Node and verified against the Docker backend; native adapters not written |
+| Client platform/version headers | Done |
+| Idempotency (messages, posts, comments) | Done, incl. database migration; verified under real concurrency |
+| Contract updated and re-pinned | Done locally, pin still provisional |
+| Physical-device and staging verification | **BLOCKED** ([device-testing.md](device-testing.md)) |
+
 ## Not started (by design)
 
 | Phase | Item | Blocked by |
 |---|---|---|
-| 1.2 | Cross-platform API transport (idempotency, absolute media URLs, uploads) | Landing Phase 1.1 (M15, M16), staging (M7) |
+| 1.2 (device part) | Run the device tests, write the native uploader | Expo app (2.1), staging (M7), devices |
 | 2.1 | Expo bootstrap, identifiers, EAS, CI | M9, M11, G0 |
 | 2.2 | Service/API integration layer | Phase 1.1, 2.1 |
 | 2.3 | Native UI kit and navigation | 2.1 |

@@ -197,6 +197,58 @@ The pulled Supabase and Redis images can be removed with `docker image prune -a`
 
 - [ ] Done
 
+## Phase D (cross-platform transport) manual steps
+
+As with Phase C, the Phase D work is **uncommitted** in both repositories. The backend working tree now holds Phase C and Phase D together.
+
+### M22. Review and commit Phase D
+
+Backend: `E:codeIUTverseIUTverse`, branch `feat/openapi-contract`. Mobile: `E:codeIUTverseiutverse-mobile`, branch `development`. Review `git status` and `git diff`, commit in groups you find sensible (for example: contract and docs, idempotency and migration, client headers, signed downloads), push, open the backend pull request and wait for the `contract` and `security` workflows. In the mobile repo, run `npm run check` before committing. The mobile contract pin is still provisional; re-pin after the backend publishes the contract (M16).
+
+- [ ] Reviewed  - [ ] Committed  - [ ] Pull requests opened
+
+### M23. Apply the database migration BEFORE deploying the backend
+
+`supabase/migrations/202610290001_client_request_ids.sql` adds a nullable column and unique indexes to `chat_messages`, `posts` and `post_comments`. It is additive and safe for the running web app. Order for each environment (staging first):
+
+1. From a trusted machine with that environment's `DIRECT_URL` in the backend's `.env`: `npm run migrate:supabase` (see the backend's `docs/vercel-deployment.md`, step 2). It applies only migrations that are not applied yet.
+2. Deploy the backend.
+3. Only then ship an app build that sends `Idempotency-Key`.
+
+If the code were deployed without the migration, message, post and comment creation would fail (the insert names a column that does not exist). Do not skip step 1.
+
+- [ ] Staging migrated  - [ ] Production migrated
+
+### M24. Turn on request logs where you want to see client versions
+
+The request log (request id, `clientPlatform`, `clientVersion`) is written at `info` level, and production defaults to `warn`. Set `LOG_LEVEL=info` on staging (and on production only if you accept the log volume) to see which app versions call the API.
+
+- [ ] Done on staging
+
+### M25. DECIDE: anonymous posts leak the author's id through the image URL
+
+Confirmed on the Docker stack: an anonymous post with an image returns an `imageUrl` and `image` containing the author's user id. This is an existing backend issue (it affects the website too) and was not changed. Decide how to fix it (random folder for anonymous images plus an owner record, or signed URLs for them) before anonymous image posts exist in the mobile app. Until then, do not offer images on anonymous posts in the app. Details: backend `docs/mobile-integration/media.md`.
+
+- [ ] Decision made  - [ ] Fixed
+
+### M26. Optional: sweep orphaned uploads
+
+An upload that is never used stays in Storage forever. A scheduled job (service role, run from a trusted place) can delete objects older than a day that no row references. Not built.
+
+- [ ] Decided
+
+### M27. Device testing (needs things that do not exist yet)
+
+Needs the Expo app (Phase 2.1), a staging backend with the Phase D changes and migration (M7, M23), test members A, B and C, a native file uploader, and one Android and one iPhone. Follow [device-testing.md](device-testing.md) and keep the evidence. Phase D gate D1 stays BLOCKED until this is done.
+
+- [ ] Android phone  - [ ] iPhone  - [ ] Emulator and simulator (optional)
+
+### M28. Clean up Docker images (optional)
+
+The Phase D live checks created more images. Containers, volumes and test accounts were removed. To reclaim space: `docker image rm iutverse-contract-web iutverse-contract-migrate`; the pulled Supabase and Redis images can be removed with `docker image prune -a` (check `docker images` first, it removes every unused image).
+
+- [ ] Done
+
 ## What I need from you to continue
 
 1. The base app identifier (M9).

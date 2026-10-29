@@ -8,7 +8,7 @@ const BACKEND_REQUEST_ID = /^[A-Za-z0-9._:-]{8,128}$/;
 let server: TestServer;
 let token: string | null;
 const make = (overrides: Partial<Parameters<typeof createApiClient>[0]> = {}): ApiClient =>
-  createApiClient({ baseUrl: server.url, getAccessToken: () => token, allowInsecureHttp: true, ...overrides });
+  createApiClient({ baseUrl: server.url, getAccessToken: () => token, allowInsecureHttp: true, retry: false, ...overrides });
 const okMe = () => server.respond((_req, res) => json(res, 200, { success: true, data: ME }));
 const lastHeader = (name: string) => server.seen.at(-1)?.headers[name];
 
@@ -284,14 +284,14 @@ describe("cancellation", () => {
 
   it("first cause wins when both fire before fetch settles: caller abort, then timeout", async () => {
     const controller = new AbortController();
-    const api = createApiClient({ baseUrl: "https://api.example.test", getAccessToken: () => null, fetch: lateFetch(120), timeoutMs: 50 });
+    const api = createApiClient({ baseUrl: "https://api.example.test", getAccessToken: () => null, fetch: lateFetch(120), timeoutMs: 50, retry: false });
     setTimeout(() => controller.abort(), 10);
     await expect(getCurrentMember(api, { signal: controller.signal })).rejects.toMatchObject({ kind: "cancelled" });
   });
 
   it("first cause wins when both fire before fetch settles: timeout, then caller abort", async () => {
     const controller = new AbortController();
-    const api = createApiClient({ baseUrl: "https://api.example.test", getAccessToken: () => null, fetch: lateFetch(120), timeoutMs: 10 });
+    const api = createApiClient({ baseUrl: "https://api.example.test", getAccessToken: () => null, fetch: lateFetch(120), timeoutMs: 10, retry: false });
     setTimeout(() => controller.abort(), 50);
     await expect(getCurrentMember(api, { signal: controller.signal })).rejects.toMatchObject({ kind: "timeout" });
   });
@@ -315,14 +315,14 @@ describe("cancellation", () => {
   });
 });
 
-describe("retries", () => {
-  it("does not retry a failed read", async () => {
+describe("with retries disabled (retry: false)", () => {
+  it("a failed read is attempted once", async () => {
     server.respond((_req, res) => json(res, 500, { success: false, message: "x" }));
     await expect(getCurrentMember(make())).rejects.toMatchObject({ kind: "server" });
     expect(server.seen).toHaveLength(1);
   });
 
-  it("does not replay a mutation after a server error or a timeout", async () => {
+  it("a mutation is attempted once after a server error or a timeout", async () => {
     server.respond((_req, res) => json(res, 500, { success: false, message: "x" }));
     await expect(make().POST("/api/posts", { body: { content: "once" } })).rejects.toMatchObject({ kind: "server" });
     expect(server.seen.filter((entry) => entry.method === "POST")).toHaveLength(1);

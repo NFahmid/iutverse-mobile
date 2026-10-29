@@ -31,7 +31,7 @@ const { data } = await api.GET("/api/feed", { params: { query: { page: 1 } } });
 | Timeouts | 15 s for JSON requests, 120 s for multipart (uploads), configurable (`timeoutMs`, `uploadTimeoutMs`). The timer covers connect, headers and reading the body, and is always cleared. |
 | Cancellation | Pass `{ signal }` to any call. A caller abort yields `kind: "cancelled"`; a signal from `AbortSignal.timeout()` yields `timeout`. If a client timeout and a caller abort both happen, the first one is reported. A signal that is already aborted sends nothing. |
 | Response checks | A 2xx whose body is not valid JSON (for example a captive-portal HTML page) is reported as `unexpected_response`, not passed to feature code. |
-| Retries | **None.** The transport never retries or replays anything. Reads can be retried by the caller (TanStack Query); mutations need idempotency keys, which the backend does not offer yet (Phase 1.2). |
+| Retries | Explicit and bounded since Phase D: reads and upload-slot creation are retried on transient failures; a create is retried only with an `Idempotency-Key` on the three operations that honor it; everything else is attempted once. See [api-transport.md](api-transport.md). Turn off with `retry: false`. |
 | Logging | The transport logs nothing. `ApiError.toJSON()` contains no token, header or body. |
 
 ## Errors
@@ -50,6 +50,7 @@ Every failure is an `ApiError` with `kind`, `status`, `code`, `requestId`, `meth
 | `timeout` | Client timeout or `AbortSignal.timeout` | Retry for reads. |
 | `cancelled` | Caller aborted | Ignore. |
 | `unexpected_response` | Non-JSON 2xx, empty body where data was required | Treat as a transport problem. |
+| `expired_link` | A signed download link still fails after one refresh (Phase D) | Ask again later; the file or access may be gone. |
 
 Note that the backend reports an **expired access token as 403**, so classification uses the `code` field, which exists from contract 1.0.0
 (backend commits that add it must be deployed before a mobile build that depends on it).
@@ -61,7 +62,10 @@ every error kind, `Retry-After`, malformed and HTML success bodies, refused conn
 mid-flight, after completion, reuse), first-cause-wins races, timer cleanup, no retries for reads or mutations, base URL rules. Live checks are in
 [staging-smoke-tests.md](staging-smoke-tests.md).
 
+## Added in Phase D
+
+Client platform/version headers, per-call options (`callOptions`), retries, idempotency keys, media resolution, direct uploads and private downloads: [api-transport.md](api-transport.md), [media-and-uploads.md](media-and-uploads.md).
+
 ## Not done here (later phases)
 
-Supabase session adapter and SecureStore persistence (2.2), multipart/signed upload helpers and idempotency (1.2), TanStack Query conventions (2.2),
-React Native on-device verification of `Request`/`AbortSignal` behavior (2.1).
+Supabase session adapter and SecureStore persistence (2.2), TanStack Query conventions (2.2), a React Native file uploader and on-device verification of the runtime assumptions (2.1, [device-testing.md](device-testing.md)).

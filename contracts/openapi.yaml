@@ -355,9 +355,9 @@ paths:
       operationId: academic_resourceFile
       tags:
         - Academic
-      summary: Resource File
+      summary: Open a resource file (302 to a signed URL, or JSON with redirect=false)
       x-priority: P1
-      x-contract-status: inferred
+      x-contract-status: verified
       x-source: src/app/api/academic/resources/[id]/file/route.ts -> src/server/controllers/communityController.ts#resourceFile
       security:
         - bearerAuth: []
@@ -368,7 +368,14 @@ paths:
           schema:
             type: integer
             minimum: 1
+        - $ref: '#/components/parameters/RedirectFlag'
       responses:
+        '200':
+          description: 'With redirect=false: the signed URL and when it expires'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignedUrlEnvelope'
         '302':
           description: Redirect to a signed or public file URL
           headers:
@@ -1186,9 +1193,9 @@ paths:
       operationId: chat_getAttachment
       tags:
         - Chat
-      summary: Get Attachment
+      summary: Open a chat attachment (302 to a signed URL, or JSON with redirect=false)
       x-priority: P1
-      x-contract-status: inferred
+      x-contract-status: verified
       x-source: src/app/api/chat/attachments/[messageId]/route.ts -> src/server/controllers/chatController.ts#getAttachment
       security:
         - bearerAuth: []
@@ -1199,7 +1206,14 @@ paths:
           schema:
             type: integer
             minimum: 1
+        - $ref: '#/components/parameters/RedirectFlag'
       responses:
+        '200':
+          description: 'With redirect=false: the signed URL and when it expires'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignedUrlEnvelope'
         '302':
           description: Redirect to a signed or public file URL
           headers:
@@ -1637,66 +1651,56 @@ paths:
       operationId: chat_sendMessage
       tags:
         - Chat
-      summary: Send Message
+      summary: Send a message (idempotent with Idempotency-Key)
       x-priority: P1
-      x-contract-status: inferred
+      x-contract-status: verified
       x-source: src/app/api/chat/messages/route.ts -> src/server/controllers/chatController.ts#sendMessage
       x-rate-limit-class: createLimiter
       security:
         - bearerAuth: []
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                sharedPostId: {}
-                attachmentWidth: {}
-                attachmentHeight: {}
-                attachmentDurationMs: {}
-                attachmentWaveform: {}
-                conversationId: {}
-                content: {}
-                uploadPath:
-                  type: string
-                  description: Object path from POST /api/uploads (purpose chat); alternative to sending the file.
-              additionalProperties: true
+              $ref: '#/components/schemas/SendMessageRequest'
           multipart/form-data:
             schema:
-              type: object
-              properties:
-                sharedPostId: {}
-                attachmentWidth: {}
-                attachmentHeight: {}
-                attachmentDurationMs: {}
-                attachmentWaveform: {}
-                conversationId: {}
-                content: {}
-                uploadPath:
-                  type: string
-                  description: Object path from POST /api/uploads (purpose chat); alternative to sending the file.
-                image:
-                  type: string
-                  format: binary
-              additionalProperties: true
+              allOf:
+                - $ref: '#/components/schemas/SendMessageRequest'
+                - type: object
+                  properties:
+                    attachment:
+                      type: string
+                      format: binary
       responses:
         '201':
-          description: Success
+          description: Created, or a replay of an earlier request with the same Idempotency-Key
+          headers:
+            Idempotent-Replayed:
+              description: true when this response is a replay of an earlier request with the same Idempotency-Key.
+              schema:
+                type: string
+                enum:
+                  - 'true'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericObject'
+                $ref: '#/components/schemas/SendMessageResponse'
         '400':
           $ref: '#/components/responses/E400'
         '401':
           $ref: '#/components/responses/E401'
         '403':
           $ref: '#/components/responses/E403'
+        '409':
+          $ref: '#/components/responses/E409'
         '429':
           $ref: '#/components/responses/E429'
         '500':
           $ref: '#/components/responses/E500'
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
   /api/chat/messages/{messageId}:
     patch:
       operationId: chat_editMessage
@@ -3609,9 +3613,9 @@ paths:
       operationId: posts_createPost
       tags:
         - Posts
-      summary: Create a post
+      summary: Create a post (idempotent with Idempotency-Key)
       x-priority: P0
-      x-contract-status: reviewed
+      x-contract-status: verified
       x-source: src/app/api/posts/route.ts -> src/server/controllers/postController.ts#createPost
       x-rate-limit-class: createLimiter
       security:
@@ -3633,21 +3637,32 @@ paths:
                       format: binary
       responses:
         '201':
-          description: Created
+          description: Created, or a replay of an earlier request with the same Idempotency-Key
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PostEnvelope'
+          headers:
+            Idempotent-Replayed:
+              description: true when this response is a replay of an earlier request with the same Idempotency-Key.
+              schema:
+                type: string
+                enum:
+                  - 'true'
         '400':
           $ref: '#/components/responses/E400'
         '401':
           $ref: '#/components/responses/E401'
         '403':
           $ref: '#/components/responses/E403'
+        '409':
+          $ref: '#/components/responses/E409'
         '429':
           $ref: '#/components/responses/E429'
         '500':
           $ref: '#/components/responses/E500'
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
   /api/posts/{id}:
     get:
       operationId: posts_getPost
@@ -3816,9 +3831,9 @@ paths:
       operationId: posts_createComment
       tags:
         - Posts
-      summary: Comment on a post
+      summary: Comment on a post (idempotent with Idempotency-Key)
       x-priority: P0
-      x-contract-status: reviewed
+      x-contract-status: verified
       x-source: src/app/api/posts/[id]/comments/route.ts -> src/server/controllers/commentController.ts#createComment
       x-rate-limit-class: createLimiter
       security:
@@ -3830,6 +3845,7 @@ paths:
           schema:
             type: integer
             minimum: 1
+        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
@@ -3838,17 +3854,26 @@ paths:
               $ref: '#/components/schemas/CommentCreateRequest'
       responses:
         '201':
-          description: Created
+          description: Created, or a replay of an earlier request with the same Idempotency-Key
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CommentEnvelope'
+          headers:
+            Idempotent-Replayed:
+              description: true when this response is a replay of an earlier request with the same Idempotency-Key.
+              schema:
+                type: string
+                enum:
+                  - 'true'
         '400':
           $ref: '#/components/responses/E400'
         '401':
           $ref: '#/components/responses/E401'
         '403':
           $ref: '#/components/responses/E403'
+        '409':
+          $ref: '#/components/responses/E409'
         '429':
           $ref: '#/components/responses/E429'
         '500':
@@ -5013,7 +5038,7 @@ components:
       additionalProperties: true
     ErrorBody:
       type: object
-      description: 'Error body. `message` is always present. `success: false` is present on most errors but not all (some controllers answer `{ message }` only). `code` is a stable machine-readable value and is currently emitted by the authentication step only; clients must not require it elsewhere.'
+      description: 'Error body. `message` is always present. `success: false` is present on most errors but not all (some controllers answer `{ message }` only). `code` is a stable machine-readable value and is currently emitted by the authentication step and by Idempotency-Key handling only; clients must not require it elsewhere.'
       required:
         - message
       properties:
@@ -5030,10 +5055,38 @@ components:
             - AUTH_TOKEN_REQUIRED
             - AUTH_TOKEN_INVALID
             - MEMBERSHIP_REQUIRED
+            - IDEMPOTENCY_KEY_INVALID
+            - IDEMPOTENCY_KEY_REUSED
         error:
           type: string
           description: Internal detail. Only sent when the server runs with EXPOSE_ERRORS outside production.
       additionalProperties: true
+    SignedUrl:
+      type: object
+      required:
+        - url
+        - expiresAt
+      properties:
+        url:
+          type: string
+          format: uri
+          description: A signed URL. Treat it as a secret while it is valid; never log it.
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the URL stops working. Ask the endpoint again for a fresh one while you are still authorized.
+    SignedUrlEnvelope:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+          enum:
+            - true
+        data:
+          $ref: '#/components/schemas/SignedUrl'
     GenericObject:
       type: object
       description: A JSON object whose fields are not yet documented (contract status `inferred`).
@@ -5100,14 +5153,83 @@ components:
               nullable: true
             role:
               type: string
-    CommentUpdateRequest:
+    SendMessageRequest:
       type: object
+      description: JSON or multipart (multipart sends every value as text). One of a file, a GIF or a shared post per message.
       required:
-        - content
+        - conversationId
       properties:
+        conversationId:
+          type: integer
+          minimum: 1
         content:
           type: string
-          maxLength: 2000
+          maxLength: 4000
+        uploadPath:
+          type: string
+          description: Object path from POST /api/uploads (purpose chat), instead of sending the file.
+        attachmentName:
+          type: string
+          maxLength: 200
+        attachmentWidth:
+          type: integer
+          minimum: 1
+          maximum: 20000
+        attachmentHeight:
+          type: integer
+          minimum: 1
+          maximum: 20000
+        attachmentDurationMs:
+          type: integer
+          minimum: 0
+          maximum: 3600000
+        attachmentWaveform:
+          description: Waveform samples for voice messages.
+        gifUrl:
+          type: string
+          format: uri
+        gifWidth:
+          type: integer
+          minimum: 1
+          maximum: 4000
+        gifHeight:
+          type: integer
+          minimum: 1
+          maximum: 4000
+        sharedPostId:
+          type: integer
+          minimum: 1
+    ChatAttachment:
+      type: object
+      nullable: true
+      properties:
+        url:
+          type: string
+          nullable: true
+          description: Signed URL valid for about one hour. Refresh by fetching the message list or GET /api/chat/attachments/{messageId}?redirect=false.
+        name:
+          type: string
+          nullable: true
+        mimeType:
+          type: string
+          nullable: true
+        size:
+          type: integer
+          nullable: true
+        width:
+          type: integer
+          nullable: true
+        height:
+          type: integer
+          nullable: true
+        durationMs:
+          type: integer
+          nullable: true
+        waveform:
+          type: array
+          nullable: true
+          items:
+            type: number
     MemberSummary:
       type: object
       nullable: true
@@ -5144,6 +5266,109 @@ components:
               type: string
               nullable: true
               description: Storage object path.
+    ChatMessage:
+      type: object
+      required:
+        - id
+        - conversationId
+        - senderId
+        - kind
+        - content
+        - sentAt
+      properties:
+        id:
+          type: integer
+        conversationId:
+          type: integer
+        senderId:
+          type: string
+          format: uuid
+        receiverId:
+          type: string
+          nullable: true
+          description: Always null; kept for compatibility.
+        kind:
+          type: string
+          enum:
+            - text
+            - image
+            - video
+            - audio
+            - file
+            - gif
+            - post
+        content:
+          type: string
+        sentAt:
+          type: string
+          format: date-time
+        deliveredAt:
+          type: string
+          format: date-time
+          nullable: true
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+        editedAt:
+          type: string
+          format: date-time
+          nullable: true
+        isRead:
+          type: boolean
+        attachment:
+          $ref: '#/components/schemas/ChatAttachment'
+        attachmentUrl:
+          type: string
+          nullable: true
+        attachmentName:
+          type: string
+          nullable: true
+        gif:
+          type: object
+          nullable: true
+          properties:
+            url:
+              type: string
+            width:
+              type: integer
+            height:
+              type: integer
+        sharedPost:
+          type: object
+          nullable: true
+          additionalProperties: true
+        reactions:
+          type: array
+          items:
+            type: object
+            properties:
+              emoji:
+                type: string
+              userId:
+                type: string
+                format: uuid
+        sender:
+          $ref: '#/components/schemas/MemberSummary'
+    SendMessageResponse:
+      type: object
+      description: Bare body (no `success`).
+      required:
+        - message
+        - data
+      properties:
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/ChatMessage'
+    CommentUpdateRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          maxLength: 2000
     Comment:
       type: object
       required:
@@ -5830,16 +6055,23 @@ components:
           type: string
         path:
           type: string
-          description: Pass this back as `uploadPath` to the route that uses the file.
+          description: Pass this back as `uploadPath` to the route that uses the file. The upload is an unused orphan until a route claims it.
         token:
           type: string
           description: Supabase Storage signed-upload token. Short lived; do not log.
         signedUrl:
           type: string
+          format: uri
+          description: Where to PUT the file bytes. The client-facing Storage address (not the server's internal one), with the secret token in its query. Never log it, and never send the bearer token to it.
         mimeType:
           type: string
         maxBytes:
           type: integer
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the signed upload stops working, read from the token's own expiry. Null if it could not be read. Upload before this time; request a new intent afterwards.
     UploadIntentEnvelope:
       type: object
       required:
@@ -6018,7 +6250,7 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorBody'
     E409:
-      description: Conflict with current state (for example a duplicate).
+      description: Conflict with current state (for example a duplicate), or `code` IDEMPOTENCY_KEY_REUSED when an Idempotency-Key was already used for a different request.
       headers:
         X-Request-Id:
           $ref: '#/components/headers/XRequestId'
@@ -6044,3 +6276,20 @@ components:
       schema:
         type: integer
         minimum: 1
+    RedirectFlag:
+      name: redirect
+      in: query
+      required: false
+      description: Send redirect=false to receive the signed URL as JSON (url and expiresAt) instead of a 302 redirect. The same authorization applies. Any other value keeps the redirect.
+      schema:
+        type: string
+        enum:
+          - 'false'
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: Makes a retry safe. Send 16 to 64 characters of A-Z a-z 0-9 _ - (a UUID works) and send the SAME value when you retry the same action, for example after a timeout. A retry returns the resource that was already created and sets the response header Idempotent-Replayed to true; the same key with different content is refused with 409 IDEMPOTENCY_KEY_REUSED. Keys are scoped to the signed-in member. Omit it for the previous behavior.
+      schema:
+        type: string
+        pattern: ^[A-Za-z0-9_-]{16,64}$

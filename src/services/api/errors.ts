@@ -26,7 +26,9 @@ export type ApiErrorKind =
   /** The caller aborted the request. Not an error to report to users. */
   | "cancelled"
   /** A response arrived but did not have the documented shape (non-JSON success body, unmapped status). */
-  | "unexpected_response";
+  | "unexpected_response"
+  /** A signed download link no longer works even after it was refreshed. The file may be gone or access may have changed. */
+  | "expired_link";
 
 /** Stable codes currently sent by the backend's authentication step. */
 export type ApiErrorCode = "AUTH_TOKEN_REQUIRED" | "AUTH_TOKEN_INVALID" | "MEMBERSHIP_REQUIRED";
@@ -101,6 +103,7 @@ const GENERIC_MESSAGES: Partial<Record<ApiErrorKind, string>> = {
   timeout: "The request took too long. Please try again.",
   cancelled: "The request was cancelled.",
   unexpected_response: "The server sent an unexpected response.",
+  expired_link: "This link has expired. Please try again.",
 };
 
 /** Maps an HTTP error response to an error kind (the status and the optional `code` decide; message text never does). */

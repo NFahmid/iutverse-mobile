@@ -2,7 +2,7 @@
  * GENERATED FILE. DO NOT EDIT.
  * Contract: iutverse-api 1.0.0 (provisional pin)
  * Source:   A-Piyas-04/IUTverse (unreleased build)
- * sha256:   08c72600c31d2e0f4b1554f05cd784fc17a9ae51d6316132630c8f84aa3a4d04
+ * sha256:   6c8a750cc3914d39f60158ba436f0b1ca8a0b25463d9210610a703717251f274
  * Generator: openapi-typescript 7.13.0
  * Regenerate with `npm run contract:generate`.
  */
@@ -69,7 +69,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Resource File */
+        /** Open a resource file (302 to a signed URL, or JSON with redirect=false) */
         get: operations["academic_resourceFile"];
         put?: never;
         post?: never;
@@ -399,7 +399,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Attachment */
+        /** Open a chat attachment (302 to a signed URL, or JSON with redirect=false) */
         get: operations["chat_getAttachment"];
         put?: never;
         post?: never;
@@ -590,7 +590,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Send Message */
+        /** Send a message (idempotent with Idempotency-Key) */
         post: operations["chat_sendMessage"];
         delete?: never;
         options?: never;
@@ -1201,7 +1201,7 @@ export interface paths {
         /** List posts */
         get: operations["posts_getPosts"];
         put?: never;
-        /** Create a post */
+        /** Create a post (idempotent with Idempotency-Key) */
         post: operations["posts_createPost"];
         delete?: never;
         options?: never;
@@ -1238,7 +1238,7 @@ export interface paths {
         /** List top-level comments of a post */
         get: operations["posts_getPostComments"];
         put?: never;
-        /** Comment on a post */
+        /** Comment on a post (idempotent with Idempotency-Key) */
         post: operations["posts_createComment"];
         delete?: never;
         options?: never;
@@ -1653,7 +1653,7 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
-        /** @description Error body. `message` is always present. `success: false` is present on most errors but not all (some controllers answer `{ message }` only). `code` is a stable machine-readable value and is currently emitted by the authentication step only; clients must not require it elsewhere. */
+        /** @description Error body. `message` is always present. `success: false` is present on most errors but not all (some controllers answer `{ message }` only). `code` is a stable machine-readable value and is currently emitted by the authentication step and by Idempotency-Key handling only; clients must not require it elsewhere. */
         ErrorBody: {
             /** @enum {boolean} */
             success?: false;
@@ -1662,11 +1662,28 @@ export interface components {
              * @description Stable error code. Unknown values must be treated as a generic error of that HTTP status.
              * @enum {string}
              */
-            code?: "AUTH_TOKEN_REQUIRED" | "AUTH_TOKEN_INVALID" | "MEMBERSHIP_REQUIRED";
+            code?: "AUTH_TOKEN_REQUIRED" | "AUTH_TOKEN_INVALID" | "MEMBERSHIP_REQUIRED" | "IDEMPOTENCY_KEY_INVALID" | "IDEMPOTENCY_KEY_REUSED";
             /** @description Internal detail. Only sent when the server runs with EXPOSE_ERRORS outside production. */
             error?: string;
         } & {
             [key: string]: unknown;
+        };
+        SignedUrl: {
+            /**
+             * Format: uri
+             * @description A signed URL. Treat it as a secret while it is valid; never log it.
+             */
+            url: string;
+            /**
+             * Format: date-time
+             * @description When the URL stops working. Ask the endpoint again for a fresh one while you are still authorized.
+             */
+            expiresAt: string;
+        };
+        SignedUrlEnvelope: {
+            /** @enum {boolean} */
+            success: true;
+            data: components["schemas"]["SignedUrl"];
         };
         /** @description A JSON object whose fields are not yet documented (contract status `inferred`). */
         GenericObject: {
@@ -1699,9 +1716,35 @@ export interface components {
                 role?: string;
             };
         };
-        CommentUpdateRequest: {
-            content: string;
+        /** @description JSON or multipart (multipart sends every value as text). One of a file, a GIF or a shared post per message. */
+        SendMessageRequest: {
+            conversationId: number;
+            content?: string;
+            /** @description Object path from POST /api/uploads (purpose chat), instead of sending the file. */
+            uploadPath?: string;
+            attachmentName?: string;
+            attachmentWidth?: number;
+            attachmentHeight?: number;
+            attachmentDurationMs?: number;
+            /** @description Waveform samples for voice messages. */
+            attachmentWaveform?: unknown;
+            /** Format: uri */
+            gifUrl?: string;
+            gifWidth?: number;
+            gifHeight?: number;
+            sharedPostId?: number;
         };
+        ChatAttachment: {
+            /** @description Signed URL valid for about one hour. Refresh by fetching the message list or GET /api/chat/attachments/{messageId}?redirect=false. */
+            url?: string | null;
+            name?: string | null;
+            mimeType?: string | null;
+            size?: number | null;
+            width?: number | null;
+            height?: number | null;
+            durationMs?: number | null;
+            waveform?: number[] | null;
+        } | null;
         /** @description Minimal public member card embedded in posts, comments and reactions. Null for anonymous content or when the profile is missing. */
         MemberSummary: {
             /** Format: uuid */
@@ -1718,6 +1761,51 @@ export interface components {
                 profilePicture?: string | null;
             };
         } | null;
+        ChatMessage: {
+            id: number;
+            conversationId: number;
+            /** Format: uuid */
+            senderId: string;
+            /** @description Always null; kept for compatibility. */
+            receiverId?: string | null;
+            /** @enum {string} */
+            kind: "text" | "image" | "video" | "audio" | "file" | "gif" | "post";
+            content: string;
+            /** Format: date-time */
+            sentAt: string;
+            /** Format: date-time */
+            deliveredAt?: string | null;
+            /** Format: date-time */
+            readAt?: string | null;
+            /** Format: date-time */
+            editedAt?: string | null;
+            isRead?: boolean;
+            attachment?: components["schemas"]["ChatAttachment"];
+            attachmentUrl?: string | null;
+            attachmentName?: string | null;
+            gif?: {
+                url?: string;
+                width?: number;
+                height?: number;
+            } | null;
+            sharedPost?: {
+                [key: string]: unknown;
+            } | null;
+            reactions?: {
+                emoji?: string;
+                /** Format: uuid */
+                userId?: string;
+            }[];
+            sender?: components["schemas"]["MemberSummary"];
+        };
+        /** @description Bare body (no `success`). */
+        SendMessageResponse: {
+            message: string;
+            data: components["schemas"]["ChatMessage"];
+        };
+        CommentUpdateRequest: {
+            content: string;
+        };
         Comment: {
             id: number;
             postId: number;
@@ -2010,13 +2098,22 @@ export interface components {
         UploadIntent: {
             purpose: string;
             bucket: string;
-            /** @description Pass this back as `uploadPath` to the route that uses the file. */
+            /** @description Pass this back as `uploadPath` to the route that uses the file. The upload is an unused orphan until a route claims it. */
             path: string;
             /** @description Supabase Storage signed-upload token. Short lived; do not log. */
             token: string;
+            /**
+             * Format: uri
+             * @description Where to PUT the file bytes. The client-facing Storage address (not the server's internal one), with the secret token in its query. Never log it, and never send the bearer token to it.
+             */
             signedUrl: string;
             mimeType: string;
             maxBytes: number;
+            /**
+             * Format: date-time
+             * @description When the signed upload stops working, read from the token's own expiry. Null if it could not be read. Upload before this time; request a new intent afterwards.
+             */
+            expiresAt?: string | null;
         };
         UploadIntentEnvelope: {
             /** @enum {boolean} */
@@ -2140,7 +2237,7 @@ export interface components {
                 "application/json": components["schemas"]["ErrorBody"];
             };
         };
-        /** @description Conflict with current state (for example a duplicate). */
+        /** @description Conflict with current state (for example a duplicate), or `code` IDEMPOTENCY_KEY_REUSED when an Idempotency-Key was already used for a different request. */
         E409: {
             headers: {
                 "X-Request-Id": components["headers"]["XRequestId"];
@@ -2156,6 +2253,10 @@ export interface components {
         Page: number;
         /** @description Page size. The default and the maximum differ per endpoint (defaults 10 to 20, maximums 50 or 100); out-of-range values are clamped by the server rather than rejected. */
         Limit: number;
+        /** @description Send redirect=false to receive the signed URL as JSON (url and expiresAt) instead of a 302 redirect. The same authorization applies. Any other value keeps the redirect. */
+        RedirectFlag: "false";
+        /** @description Makes a retry safe. Send 16 to 64 characters of A-Z a-z 0-9 _ - (a UUID works) and send the SAME value when you retry the same action, for example after a timeout. A retry returns the resource that was already created and sets the response header Idempotent-Replayed to true; the same key with different content is refused with 409 IDEMPOTENCY_KEY_REUSED. Keys are scoped to the signed-in member. Omit it for the previous behavior. */
+        IdempotencyKey: string;
     };
     requestBodies: never;
     headers: {
@@ -2426,7 +2527,10 @@ export interface operations {
     };
     academic_resourceFile: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Send redirect=false to receive the signed URL as JSON (url and expiresAt) instead of a 302 redirect. The same authorization applies. Any other value keeps the redirect. */
+                redirect?: components["parameters"]["RedirectFlag"];
+            };
             header?: never;
             path: {
                 id: number;
@@ -2435,6 +2539,15 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /** @description With redirect=false: the signed URL and when it expires */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignedUrlEnvelope"];
+                };
+            };
             /** @description Redirect to a signed or public file URL */
             302: {
                 headers: {
@@ -3121,7 +3234,10 @@ export interface operations {
     };
     chat_getAttachment: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Send redirect=false to receive the signed URL as JSON (url and expiresAt) instead of a 302 redirect. The same authorization applies. Any other value keeps the redirect. */
+                redirect?: components["parameters"]["RedirectFlag"];
+            };
             header?: never;
             path: {
                 messageId: number;
@@ -3130,6 +3246,15 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /** @description With redirect=false: the signed URL and when it expires */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignedUrlEnvelope"];
+                };
+            };
             /** @description Redirect to a signed or public file URL */
             302: {
                 headers: {
@@ -3487,55 +3612,38 @@ export interface operations {
     chat_sendMessage: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Makes a retry safe. Send 16 to 64 characters of A-Z a-z 0-9 _ - (a UUID works) and send the SAME value when you retry the same action, for example after a timeout. A retry returns the resource that was already created and sets the response header Idempotent-Replayed to true; the same key with different content is refused with 409 IDEMPOTENCY_KEY_REUSED. Keys are scoped to the signed-in member. Omit it for the previous behavior. */
+                "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
+            };
             path?: never;
             cookie?: never;
         };
-        requestBody?: {
+        requestBody: {
             content: {
-                "application/json": {
-                    sharedPostId?: unknown;
-                    attachmentWidth?: unknown;
-                    attachmentHeight?: unknown;
-                    attachmentDurationMs?: unknown;
-                    attachmentWaveform?: unknown;
-                    conversationId?: unknown;
-                    content?: unknown;
-                    /** @description Object path from POST /api/uploads (purpose chat); alternative to sending the file. */
-                    uploadPath?: string;
-                } & {
-                    [key: string]: unknown;
-                };
-                "multipart/form-data": {
-                    sharedPostId?: unknown;
-                    attachmentWidth?: unknown;
-                    attachmentHeight?: unknown;
-                    attachmentDurationMs?: unknown;
-                    attachmentWaveform?: unknown;
-                    conversationId?: unknown;
-                    content?: unknown;
-                    /** @description Object path from POST /api/uploads (purpose chat); alternative to sending the file. */
-                    uploadPath?: string;
+                "application/json": components["schemas"]["SendMessageRequest"];
+                "multipart/form-data": components["schemas"]["SendMessageRequest"] & {
                     /** Format: binary */
-                    image?: string;
-                } & {
-                    [key: string]: unknown;
+                    attachment?: string;
                 };
             };
         };
         responses: {
-            /** @description Success */
+            /** @description Created, or a replay of an earlier request with the same Idempotency-Key */
             201: {
                 headers: {
+                    /** @description true when this response is a replay of an earlier request with the same Idempotency-Key. */
+                    "Idempotent-Replayed"?: "true";
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GenericObject"];
+                    "application/json": components["schemas"]["SendMessageResponse"];
                 };
             };
             400: components["responses"]["E400"];
             401: components["responses"]["E401"];
             403: components["responses"]["E403"];
+            409: components["responses"]["E409"];
             429: components["responses"]["E429"];
             500: components["responses"]["E500"];
         };
@@ -5086,7 +5194,10 @@ export interface operations {
     posts_createPost: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Makes a retry safe. Send 16 to 64 characters of A-Z a-z 0-9 _ - (a UUID works) and send the SAME value when you retry the same action, for example after a timeout. A retry returns the resource that was already created and sets the response header Idempotent-Replayed to true; the same key with different content is refused with 409 IDEMPOTENCY_KEY_REUSED. Keys are scoped to the signed-in member. Omit it for the previous behavior. */
+                "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -5100,9 +5211,11 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Created */
+            /** @description Created, or a replay of an earlier request with the same Idempotency-Key */
             201: {
                 headers: {
+                    /** @description true when this response is a replay of an earlier request with the same Idempotency-Key. */
+                    "Idempotent-Replayed"?: "true";
                     [name: string]: unknown;
                 };
                 content: {
@@ -5112,6 +5225,7 @@ export interface operations {
             400: components["responses"]["E400"];
             401: components["responses"]["E401"];
             403: components["responses"]["E403"];
+            409: components["responses"]["E409"];
             429: components["responses"]["E429"];
             500: components["responses"]["E500"];
         };
@@ -5244,7 +5358,10 @@ export interface operations {
     posts_createComment: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Makes a retry safe. Send 16 to 64 characters of A-Z a-z 0-9 _ - (a UUID works) and send the SAME value when you retry the same action, for example after a timeout. A retry returns the resource that was already created and sets the response header Idempotent-Replayed to true; the same key with different content is refused with 409 IDEMPOTENCY_KEY_REUSED. Keys are scoped to the signed-in member. Omit it for the previous behavior. */
+                "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
+            };
             path: {
                 id: number;
             };
@@ -5256,9 +5373,11 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Created */
+            /** @description Created, or a replay of an earlier request with the same Idempotency-Key */
             201: {
                 headers: {
+                    /** @description true when this response is a replay of an earlier request with the same Idempotency-Key. */
+                    "Idempotent-Replayed"?: "true";
                     [name: string]: unknown;
                 };
                 content: {
@@ -5268,6 +5387,7 @@ export interface operations {
             400: components["responses"]["E400"];
             401: components["responses"]["E401"];
             403: components["responses"]["E403"];
+            409: components["responses"]["E409"];
             429: components["responses"]["E429"];
             500: components["responses"]["E500"];
         };

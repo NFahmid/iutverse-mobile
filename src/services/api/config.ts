@@ -20,6 +20,12 @@ export class ApiConfigError extends Error {
 /** Validates and normalizes the API origin: absolute, https (unless explicitly allowed in development), no path, no trailing slash. */
 export const normalizeBaseUrl = (value: string | undefined | null, options: BaseUrlOptions = {}): string => {
   if (!value?.trim()) throw new ApiConfigError("API base URL is not configured (EXPO_PUBLIC_API_BASE_URL).");
+  // "localhost:8080" parses as a URL whose scheme is "localhost:", which would produce a confusing message below.
+  if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(value.trim()) && !/^(javascript|data|file|blob|mailto):/i.test(value.trim())) {
+    throw new ApiConfigError(
+      `API base URL must start with https://, got "${value}". A relative URL, or a bare host such as "localhost:8080", cannot work on a phone: on a device "localhost" is the phone itself, not your computer. Use the computer's LAN address, a tunnel, or the staging URL.`
+    );
+  }
   let url: URL;
   try {
     url = new URL(value.trim());
@@ -33,6 +39,7 @@ export const normalizeBaseUrl = (value: string | undefined | null, options: Base
       throw new ApiConfigError("API base URL must use https. Plain http is only allowed for development builds with allowInsecureHttp.");
     }
   }
+  if (url.username || url.password) throw new ApiConfigError("API base URL must not contain a username or password.");
   if (url.search || url.hash) throw new ApiConfigError("API base URL must not contain a query or fragment.");
   if (url.pathname.replace(/\/+$/, "")) throw new ApiConfigError("API base URL must be an origin (scheme, host, port); contract paths already start with /api.");
   return url.origin;

@@ -4,12 +4,13 @@ Android and iOS app for [IUTverse](https://github.com/A-Piyas-04/IUTverse), the 
 
 ## Status
 
-The Expo project itself is created in Phase 2.1 and does not exist yet. What exists today (Phase 1.1, see [docs/phase-c-progress.md](docs/phase-c-progress.md)):
+The Expo project itself is created in Phase 2.1 and does not exist yet. What exists today (Phases 1.1 and 1.2, see [docs/phase-c-progress.md](docs/phase-c-progress.md) and [docs/phase-d-progress.md](docs/phase-d-progress.md)):
 
 * the **pinned backend API contract** (OpenAPI) and the **TypeScript client generated from it**;
 * the **API transport** (bearer token injection, request ids, timeouts, cancellation, typed errors) with offline tests;
 * **contract tooling and CI**: sync, integrity check, generated-client drift detection;
-* a **live smoke test** harness for a real backend (not yet run against one; see the progress doc).
+* a **live smoke test** harness, run against the backend's local Docker stack (not against staging, which does not exist);
+* the **cross-platform transport** (Phase 1.2): client headers, bounded retries, idempotency keys, media URL rules, direct uploads and signed downloads ([docs/api-transport.md](docs/api-transport.md)); not yet tested on a device.
 
 ## Two repositories, one backend
 

@@ -62,17 +62,19 @@
 
 ## D. Replace Phase 1.2 — Cross-platform API transport
 
-- [ ] Keep existing browser-relative `/api` behavior stable for web.  
-- [ ] Define an absolute HTTPS API base URL for Android/iOS.  
-- [ ] Return mobile-safe absolute media URLs or explicitly document resolution rules.  
-- [ ] Support native multipart/signed uploads, signed downloads, expiration and retries.  
-- [ ] Add optional `X-Client-Platform` and `X-Client-Version` for observability.  
-- [ ] Specify idempotency for message sends and other retry-prone mutations.  
-- [ ] Test auth, uploads, redirects and API access on physical devices; `localhost` on a phone is not the developer computer.
+**Status (2026-10-29):** implemented and verified in Node and against the backend's local Docker stack (uncommitted in both repositories). Gate D1 is **not** passed: no device, staging or Expo app exists yet. Evidence and findings: `docs/phase-d-progress.md`.
+
+- [x] ~~Keep existing browser-relative `/api` behavior stable for web.~~ ✅ _(no web route or response changed; backend suite 461/461 passes)_
+- [x] ~~Define an absolute HTTPS API base URL for Android/iOS.~~ ✅ _(`normalizeBaseUrl` + docs/api-transport.md; runtime check on devices still open)_
+- [x] ~~Return mobile-safe absolute media URLs or explicitly document resolution rules.~~ ✅ _(public URLs are already absolute; rules and `resolveMedia` documented/tested; docs/media-and-uploads.md)_
+- [ ] Support native multipart/signed uploads, signed downloads, expiration and retries. **(implemented and verified in Node and against the Docker backend; the native uploader adapter and React Native runtime are not done)**
+- [x] ~~Add optional `X-Client-Platform` and `X-Client-Version` for observability.~~ ✅ _(backend parse/log + mobile send, tested both sides)_
+- [x] ~~Specify idempotency for message sends and other retry-prone mutations.~~ ✅ _(`Idempotency-Key` on messages, posts, comments; migration + tests; verified live under concurrency)_
+- [ ] Test auth, uploads, redirects and API access on physical devices; `localhost` on a phone is not the developer computer. **(BLOCKED: no Expo app, staging or device; procedure in docs/device-testing.md)**
 
 **Deliverables:** Transport specification, upload contract, staging device test evidence.
 
-**Exit gate:** Existing web and mobile clients execute equivalent authorized operations.
+**Exit gate:** Existing web and mobile clients execute equivalent authorized operations. **(D1 BLOCKED: physical-device verification is missing; see `docs/phase-d-progress.md`)**
 
 ## E. Replace all Phase 2 subphases — Independent mobile bootstrap
 

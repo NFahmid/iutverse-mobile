@@ -1,13 +1,26 @@
 # Backend hand-off (work that belongs in `iutverse`)
 
-The phase 0 and 1 plan puts several deliverables in the backend repo. This file lists them, with what the current backend (commit `32685e3`) already has, so they can be opened as issues in [A-Piyas-04/IUTverse](https://github.com/A-Piyas-04/IUTverse). Nothing here has been changed in that repo.
+The phase 0 and 1 plan puts several deliverables in the backend repo. This file lists them, with what the current backend (commit `32685e3`) already has, so they can be opened as issues in [A-Piyas-04/IUTverse](https://github.com/A-Piyas-04/IUTverse). 
+## Status after Phase 1.1
+
+The items marked **done** below are implemented in a local, **uncommitted** working tree of `A-Piyas-04/IUTverse` on the branch `feat/openapi-contract` (cut from `development` at `32685e3`). They still need review, a commit, a push and a pull request by someone with write access. See [phase-c-progress.md](phase-c-progress.md) for the file list and evidence.
+
+| Item | Status |
+|---|---|
+| OpenAPI 3.0.3 contract, `docs/api/` (README, conventions, compatibility policy, realtime, generated inventory) | **done** (130 operations; bodies fully typed for P0 only) |
+| `docs/mobile-integration/auth.md`, `uploads.md` | **done** (realtime is `docs/api/realtime.md`) |
+| Contract tests (surface, conformance, gate) and CI workflow `.github/workflows/contract.yml` | **done**; the workflow has not run on GitHub and `oasdiff` has not been executed |
+| Additive `X-Request-Id` echo and auth error `code` | **done** |
+| First release tag `api-contract-v1.0.0` | **open**, needs a maintainer after merge |
+| Envelope/pagination/error-body unification | **deferred** (documented as-is; needs a contract MAJOR) |
+| Phase 1.2 items below | **not started** |
 
 ## Files the plan expects in `iutverse`
 
 | Path (in `iutverse`) | Content | Starting point |
 |---|---|---|
-| `docs/api/openapi.yaml` (or generated artifact) | OpenAPI 3.x for P0/P1 endpoints | None exists. `docs/backend-structure.md` has the endpoint table; `tests/server/api-surface.test.ts` pins the route list; `src/lib/types.ts` (client DTOs) and `src/server/utils/validation.ts` can seed schemas. Server validation is hand-written, not Zod, so a generated-from-schema spec needs a decision. |
-| `docs/api/compatibility-policy.md` | Versioning, support window, deprecation | Copy [api-compatibility-policy.md](api-compatibility-policy.md) after review. |
+| `docs/api/openapi.yaml` (or generated artifact) | OpenAPI 3.x for P0/P1 endpoints | Done. Originally none existed. `docs/backend-structure.md` has the endpoint table; `tests/server/api-surface.test.ts` pins the route list; `src/lib/types.ts` (client DTOs) and `src/server/utils/validation.ts` can seed schemas. Server validation is hand-written, not Zod, so a generated-from-schema spec needs a decision. |
+| `docs/api/compatibility-policy.md` | Versioning, support window, deprecation | Written (done); this repo's [api-compatibility-policy.md](api-compatibility-policy.md) now points to it. |
 | `docs/mobile-integration/auth.md` | Bearer-token use, `/api/auth/me` membership gate, OAuth PKCE redirect URLs, token refresh | See notes below. |
 | `docs/mobile-integration/uploads.md` | Signed upload flow, size/type limits, `uploadPath` | `POST /api/uploads`, `docs/vercel-deployment.md`, `docs/messaging.md` (10 MB images/PDF, 50 MB video). |
 | `docs/mobile-integration/realtime.md` | Which tables mobile subscribes to and the RLS that authorizes them | `docs/messaging.md` (Realtime section), `supabase/migrations/202610240001_chat_messaging.sql`. |

@@ -4,57 +4,61 @@
 
 **Decision:** Keep `iutverse` (existing Next.js web \+ API/backend) and create `iutverse-mobile` (Expo/React Native, Android \+ iOS). Keep the same Supabase project per environment and existing backend. These are targeted amendments; all other phases and feature checklists remain valid.
 
-## A. Replace the architecture decisions section
+**Status (2026-10-29):** ~~struck-through~~ items are completed. Sections A and B are done as documentation; the Phase 0.3 exit gate (G0) still waits on the manual steps in `docs/manual-setup.md`. Section C (Phase 1.1) is next: Stage 0 investigation is complete and the implementation plan awaits approval.
 
-1. **Two repositories:** `iutverse` owns web, API routes, controllers, services, DB migrations and deployment. `iutverse-mobile` owns Expo, React Native, TypeScript, mobile UI, mobile integration tests and EAS builds.  
-2. **One logical backend:** Web, Android and iOS use the existing Next.js API, Supabase Auth, PostgreSQL, Storage and authorized Realtime.  
-3. **API-first contracts:** Backend publishes a versioned OpenAPI specification. Mobile pins a contract version and generates a TypeScript client using `openapi-typescript` or Orval (choose one after a spike).  
-4. **No cross-repository source imports:** Never import Next.js/server-only code into the mobile app. Share contracts through generated artifacts or a published package only if justified.  
-5. **Platform-specific auth:** Web keeps browser session behavior; mobile uses Supabase Auth with secure storage and native OAuth PKCE/deep links.  
-6. **Independent releases:** Backend deployments remain backward-compatible with supported mobile versions. Mobile has its own CI/CD and store release cadence.  
-7. **Security:** Backend enforces permissions; client platform/version headers are diagnostic, never trusted for authorization. No service-role key in mobile.  
-8. **Notifications:** Preserve the durable event/outbox \+ worker approach and Expo Notifications.
+## ~~A. Replace the architecture decisions section~~ ✅ done
 
-## B. Replace Phase 0.3 — Governance and repository boundaries
+1. ~~**Two repositories:** `iutverse` owns web, API routes, controllers, services, DB migrations and deployment. `iutverse-mobile` owns Expo, React Native, TypeScript, mobile UI, mobile integration tests and EAS builds.~~
+2. ~~**One logical backend:** Web, Android and iOS use the existing Next.js API, Supabase Auth, PostgreSQL, Storage and authorized Realtime.~~
+3. ~~**API-first contracts:** Backend publishes a versioned OpenAPI specification. Mobile pins a contract version and generates a TypeScript client using `openapi-typescript` or Orval (choose one after a spike).~~
+4. ~~**No cross-repository source imports:** Never import Next.js/server-only code into the mobile app. Share contracts through generated artifacts or a published package only if justified.~~
+5. ~~**Platform-specific auth:** Web keeps browser session behavior; mobile uses Supabase Auth with secure storage and native OAuth PKCE/deep links.~~
+6. ~~**Independent releases:** Backend deployments remain backward-compatible with supported mobile versions. Mobile has its own CI/CD and store release cadence.~~
+7. ~~**Security:** Backend enforces permissions; client platform/version headers are diagnostic, never trusted for authorization. No service-role key in mobile.~~
+8. ~~**Notifications:** Preserve the durable event/outbox \+ worker approach and Expo Notifications.~~
 
-### 0.3 Separate-repository architecture and coordination
+## ~~B. Replace Phase 0.3 — Governance and repository boundaries~~ ✅ docs done, G0 pending manual steps
 
-- [ ] Create ADR describing repository ownership, shared backend, and rationale for separation.  
-- [ ] Define backend API contract ownership and mobile generated-client ownership.  
-- [ ] Define API versioning, minimum supported app version and deprecation policy.  
-- [ ] Establish cross-repo issue linking and PR dependency conventions.  
-- [ ] Document independent staging/production credentials and secrets management.  
-- [ ] Define release tagging, branch protections, CI/CD ownership and incident contacts.  
-- [ ] Prepare staging backend reachable from physical devices and representative test accounts.
+### ~~0.3 Separate-repository architecture and coordination~~
 
-**Deliverables:** Architecture ADR, ownership matrix, API compatibility policy, cross-repo contribution guide.
+- [x] ~~Create ADR describing repository ownership, shared backend, and rationale for separation.~~
+- [x] ~~Define backend API contract ownership and mobile generated-client ownership.~~
+- [x] ~~Define API versioning, minimum supported app version and deprecation policy.~~
+- [x] ~~Establish cross-repo issue linking and PR dependency conventions.~~
+- [x] ~~Document independent staging/production credentials and secrets management.~~
+- [x] ~~Define release tagging, branch protections, CI/CD ownership and incident contacts.~~
+- [ ] Prepare staging backend reachable from physical devices and representative test accounts. **(manual, still open: `docs/manual-setup.md` M7)**
 
-**Exit gate:** G0 approved; teams can identify where every change belongs.
+**Deliverables:** ~~Architecture ADR, ownership matrix, API compatibility policy, cross-repo contribution guide.~~ ✅ (see `docs/`)
+
+**Exit gate:** G0 approved; teams can identify where every change belongs. **(pending: manual items M2, M5, M7 in `docs/manual-setup.md`)**
 
 ## C. Replace Phase 1.1 — Backend API contracts
+
+**Status (2026-10-29):** implemented and passing locally in both repositories (uncommitted). Gate G1 is not declared passed. Evidence, blockers and manual steps: `docs/phase-c-progress.md`, `docs/manual-setup.md` (M15 to M21).
 
 ### 1.1 Versioned API specification and mobile client generation
 
 **In `iutverse`:**
 
-- [ ] Inventory P0/P1 endpoints, request/response DTOs, authorization, pagination, errors, uploads and realtime behavior.  
-- [ ] Create an OpenAPI 3.x specification, preferably generated from authoritative schema definitions where practical.  
-- [ ] Standardize response/error envelopes, timestamp formatting, nullability and stable identifiers.  
-- [ ] Publish a **versioned OpenAPI artifact** from backend CI (release asset, package or artifact endpoint).  
-- [ ] Validate specification and check for breaking contract changes in CI.  
-- [ ] Introduce `/api/v1` only where useful; keep current `/api` endpoints functional during migration.  
-- [ ] Add contract tests against existing web clients and representative mobile clients.
+- [x] ~~Inventory P0/P1 endpoints, request/response DTOs, authorization, pagination, errors, uploads and realtime behavior.~~ ✅ _(all 130 operations inventoried; request/response bodies typed for P0 only, P1 bodies are `inferred`)_
+- [x] ~~Create an OpenAPI 3.x specification, preferably generated from authoritative schema definitions where practical.~~ ✅ _(OpenAPI 3.0.3, hand-maintained sources guarded by tests; not generated from code because the server has no schema layer)_
+- [ ] Standardize response/error envelopes, timestamp formatting, nullability and stable identifiers. **(partial: conventions documented and request id + auth error `code` added; envelope/pagination unification deferred to a contract MAJOR)**
+- [ ] Publish a **versioned OpenAPI artifact** from backend CI (release asset, package or artifact endpoint). **(implemented in `contract.yml`, not yet run on GitHub; no release published)**
+- [ ] Validate specification and check for breaking contract changes in CI. **(spec validation done locally; `oasdiff` breaking-change check configured but not executed)**
+- [x] ~~Introduce `/api/v1` only where useful; keep current `/api` endpoints functional during migration.~~ ✅ _(decided: no `/api/v1` now; `/api` unchanged)_
+- [ ] Add contract tests against existing web clients and representative mobile clients. **(partial: spec-vs-routes and handler-conformance tests done; no web-client compatibility test yet)**
 
 **In `iutverse-mobile`:**
 
-- [ ] Pin the OpenAPI artifact version or backend commit SHA.  
-- [ ] Generate typed API client with `openapi-typescript` or Orval; document the generator and regeneration command.  
-- [ ] Wrap generated calls with bearer-token injection, absolute base URL, request IDs, timeouts, cancellation and typed errors.  
-- [ ] Add CI drift detection for generated types and integration smoke tests against staging.
+- [ ] Pin the OpenAPI artifact version or backend commit SHA. **(pinned, but PROVISIONAL: no release exists yet)**
+- [x] ~~Generate typed API client with `openapi-typescript` or Orval; document the generator and regeneration command.~~ ✅ _(openapi-typescript + openapi-fetch; `docs/api-contract.md`)_
+- [x] ~~Wrap generated calls with bearer-token injection, absolute base URL, request IDs, timeouts, cancellation and typed errors.~~ ✅ _(`src/services/api`; 65 offline tests)_
+- [ ] Add CI drift detection for generated types and integration smoke tests against staging. **(drift detection done; smoke harness passed 5/5 against the local Docker backend, staging run still open)**
 
 **Deliverables:** OpenAPI contract, generated client, cross-repo contract CI.
 
-**Exit gate:** G1; mobile reads a protected endpoint with generated types and web regressions remain green.
+**Exit gate:** G1; mobile reads a protected endpoint with generated types and web regressions remain green. **(not yet passed: see `docs/phase-c-progress.md`)**
 
 ## D. Replace Phase 1.2 — Cross-platform API transport
 

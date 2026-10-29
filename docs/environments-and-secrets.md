@@ -43,6 +43,10 @@ Everything in a mobile binary is public. The app config may contain only:
 | Staging test-account passwords | Password manager, plus GitHub Actions secrets for smoke tests | Both |
 | Push credentials (FCM, APNs key) | EAS credentials | Mobile owner |
 
+## Smoke-test configuration (CI)
+
+The live smoke tests read `SMOKE_API_BASE_URL`, `SMOKE_SUPABASE_URL`, `SMOKE_SUPABASE_ANON_KEY` (public values, stored as GitHub Actions *variables*) and `SMOKE_EMAIL`, `SMOKE_PASSWORD` (a dedicated non-production member, stored as *secrets*). They are never needed for ordinary pull requests. See [staging-smoke-tests.md](staging-smoke-tests.md).
+
 ## Test accounts (staging)
 
 Sign-up is limited to `@iut-dhaka.edu` by a database hook, so test accounts must use that domain or be created by an admin through the Supabase dashboard. Prepare at least:

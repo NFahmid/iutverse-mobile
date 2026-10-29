@@ -33,12 +33,26 @@ The full amendments are in [`IUTverse_Mobile.md`](../IUTverse_Mobile.md) (separa
 
 **Exit gate G0:** pending your approval and the manual items M2, M5, M7.
 
+## Section C (Phase 1.1): implemented, not yet at gate G1
+
+Details, evidence and blockers: [phase-c-progress.md](phase-c-progress.md). Summary:
+
+| Area | Status |
+|---|---|
+| OpenAPI contract (130 operations), conventions, realtime notes, generated inventory | Done in the backend working tree (uncommitted) |
+| Contract tests, version gate, CI workflow, additive request id and auth `code` | Done and passing locally; workflow not yet run on GitHub |
+| Pinned contract and generated client | Done, **provisional** pin (no published release yet) |
+| Transport (token, request ids, timeouts, cancellation, typed errors) | Done, 65 offline tests |
+| Drift detection and CI | Done locally; workflow not yet run on GitHub |
+| Breaking-change detection (`oasdiff`) | Configured, **not executed** |
+| Live and staging smoke tests | Harness done; see the progress doc for what ran |
+| Envelope/error/pagination unification, P1 body schemas | Deferred |
+
 ## Not started (by design)
 
 | Phase | Item | Blocked by |
 |---|---|---|
-| 1.1 | OpenAPI spec and client generation | Backend issues (M6) |
-| 1.2 | Cross-platform API transport | Phase 1.1, staging (M7) |
+| 1.2 | Cross-platform API transport (idempotency, absolute media URLs, uploads) | Landing Phase 1.1 (M15, M16), staging (M7) |
 | 2.1 | Expo bootstrap, identifiers, EAS, CI | M9, M11, G0 |
 | 2.2 | Service/API integration layer | Phase 1.1, 2.1 |
 | 2.3 | Native UI kit and navigation | 2.1 |

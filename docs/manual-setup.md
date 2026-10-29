@@ -130,9 +130,77 @@ When Phase 2.1 adds workflows, Settings -> Secrets and variables -> Actions on t
 
 - [ ] Done
 
+## Phase C (API contract) manual steps
+
+The Phase 1.1 work exists as **uncommitted** changes in both repositories. Nothing was committed, pushed or published.
+
+### M15. Review and land the backend changes
+
+Local checkout `E:codeIUTverseIUTverse`, branch `feat/openapi-contract` (cut from `development`; its upstream was deliberately unset so a plain `git push` cannot reach `development`). Check `git status` and `git diff`, then commit in whatever grouping you like, push the branch to a fork or to `A-Piyas-04/IUTverse` (you need write access, or ask the owner) and open a PR into `development`. The new workflow `.github/workflows/contract.yml` runs on that PR; read its result before merging.
+
+- [ ] Reviewed  - [ ] PR opened  - [ ] `contract` and `security` workflows green
+
+### M16. Publish contract 1.0.0
+
+After the backend PR is merged and deployed, a maintainer creates the tag on the merge commit (on `development` or `production`):
+
+```bash
+git tag api-contract-v1.0.0 <merge commit sha>
+git push origin api-contract-v1.0.0
+```
+
+The `publish` job creates the GitHub Release with `openapi.yaml`, `openapi.yaml.sha256` and `contract-metadata.json`. Check that the release exists, then in this repo:
+
+```bash
+npm run contract:sync -- 1.0.0
+npm run contract:generate
+npm run check
+```
+
+Commit `contracts/` and `src/services/api/generated/`. The sha256 should equal the provisional pin's; if it does not, the contract changed in review and the diff shows how.
+
+- [ ] Tag pushed  - [ ] Release exists  - [ ] Mobile pin replaced (no longer provisional)
+
+### M17. Run `oasdiff` once yourself (optional but recommended)
+
+Breaking-change detection runs in the backend CI through the pinned `oasdiff-action`. It could not be run here. After the first release, open a PR that removes a field and confirm the `compatibility` job fails, to prove the guard works.
+
+- [ ] Done
+
+### M18. Deploy the backend change before relying on it
+
+The mobile client classifies an expired token by the new `code` field and correlates logs by `X-Request-Id`. Both only exist after the backend branch is deployed. Deploy it to staging (M7) before running the staging smoke tests, and to production before a store build.
+
+- [ ] Staging  - [ ] Production
+
+### M19. Enable the staging smoke job
+
+In this repo: Settings -> Secrets and variables -> Actions. Variables: `SMOKE_API_BASE_URL`, `SMOKE_SUPABASE_URL`, `SMOKE_SUPABASE_ANON_KEY`. Secrets: `SMOKE_EMAIL`, `SMOKE_PASSWORD` for a dedicated non-production member. Until then the job is skipped and prints a notice. Details: [staging-smoke-tests.md](staging-smoke-tests.md).
+
+- [ ] Done
+
+### M20. Branch protection with the new checks
+
+Once the workflows have run at least once, add the check names to the `main` rule here (`verify`) and to the backend's `development`/`production` rules (`validate`, `compatibility`, plus the existing `secrets`, `app`, `database`). Do not require `staging-smoke`.
+
+- [ ] Done
+
+### M21. Clean up the local Docker stack
+
+The live check used the Compose project name `iutverse-contract`. Its containers, network and volumes (including the throwaway test member) were already removed with `down -v`. The built and pulled images remain on disk (several GB). To reclaim the space:
+
+```bash
+docker image rm iutverse-contract-web iutverse-contract-migrate
+```
+
+The pulled Supabase and Redis images can be removed with `docker image prune -a` (this removes every unused image on the machine, so check `docker images` first). To run the stack again, use an empty `--env-file` so the backend's real `.env` is not read for variable substitution.
+
+- [ ] Done
+
 ## What I need from you to continue
 
 1. The base app identifier (M9).
 2. Confirmation of the policy numbers (M5) or your preferred values.
 3. Staging URL and Supabase project URL when M7 is done (public values only; never paste keys into chat).
 4. Go-ahead for Phase 2.1 (Expo bootstrap), which this setup deliberately does not start.
+5. Review of the Phase C changes (M15) and the tag for contract 1.0.0 (M16).

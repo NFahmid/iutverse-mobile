@@ -9,7 +9,11 @@
 | [cross-repo-workflow.md](cross-repo-workflow.md) | Issue linking, PR dependencies, branches, release tags, release sequence |
 | [environments-and-secrets.md](environments-and-secrets.md) | Staging vs production, what may be in the app, where secrets live |
 | [backend-handoff.md](backend-handoff.md) | Work that belongs in the `iutverse` backend repo |
-| [phase-plan.md](phase-plan.md) | Plan status (sections A and B done) |
+| [api-contract.md](api-contract.md) | The pinned backend contract, generator choice, regeneration and upgrade procedure, drift detection |
+| [api-client.md](api-client.md) | The transport layer: auth, request ids, timeouts, cancellation, error kinds |
+| [staging-smoke-tests.md](staging-smoke-tests.md) | Live smoke tests: configuration, local Docker, CI |
+| [phase-c-progress.md](phase-c-progress.md) | Phase 1.1 (Phase C) progress, decisions, evidence and blockers |
+| [phase-plan.md](phase-plan.md) | Plan status |
 | [manual-setup.md](manual-setup.md) | Checklist of steps that need your accounts and decisions |
 
 Planned, written in later phases: `feature-parity-matrix.md`, `release-runbook.md`.

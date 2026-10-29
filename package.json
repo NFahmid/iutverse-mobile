@@ -1,0 +1,29 @@
+{
+  "name": "iutverse-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "description": "IUTverse mobile app (Expo / React Native). The Expo project is added in Phase 2.1; this package currently holds the typed API contract client and its tooling.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "contract:sync": "node scripts/contract/sync.mjs",
+    "contract:generate": "node scripts/contract/generate.mjs",
+    "contract:check": "node scripts/contract/check.mjs && node scripts/contract/generate.mjs --check",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:smoke": "vitest run --config vitest.smoke.config.ts",
+    "check": "npm run contract:check && npm run typecheck && npm test"
+  },
+  "dependencies": {
+    "openapi-fetch": "0.17.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "openapi-typescript": "7.13.0",
+    "typescript": "~5.9.3",
+    "vitest": "^4.1.9",
+    "yaml": "^2.9.1"
+  }
+}

@@ -19,4 +19,6 @@ IUTverse Mobile is the Android and iOS client for [IUTverse](https://github.com/
 
 ## Checks
 
-CI (lint, typecheck, tests, generated-client drift) is added in Phase 2.1. Until then, PRs are documentation only.
+Run `npm run check` before opening a PR. It verifies the pinned API contract and generated-client drift (`contract:check`), types (`typecheck`) and the offline tests (`test`). CI (`.github/workflows/ci.yml`) runs the same. Lint and formatting arrive with the Expo project in Phase 2.1.
+
+See [docs/api-contract.md](docs/api-contract.md) to change the pinned contract and [docs/api-client.md](docs/api-client.md) for the transport rules.

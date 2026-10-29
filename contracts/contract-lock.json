@@ -1,0 +1,13 @@
+{
+  "contract": "iutverse-api",
+  "version": "1.0.0",
+  "provisional": true,
+  "source": {
+    "repository": "A-Piyas-04/IUTverse",
+    "tag": "api-contract-v1.0.0",
+    "commit": null,
+    "asset": null
+  },
+  "sha256": "08c72600c31d2e0f4b1554f05cd784fc17a9ae51d6316132630c8f84aa3a4d04",
+  "note": "Pinned from an unreleased local build of the backend. Replace with `npm run contract:sync -- <version>` once the backend publishes this version; the sha256 should match."
+}

@@ -1,0 +1,17 @@
+# Normalize line endings in the repository; checkouts use the platform default.
+* text=auto
+
+# Shell scripts and CI files must keep LF on every checkout.
+*.sh text eol=lf
+.github/** text eol=lf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary

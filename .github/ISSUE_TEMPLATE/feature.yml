@@ -1,0 +1,26 @@
+name: Feature or task
+description: A mobile feature, parity gap or plan task
+body:
+  - type: input
+    id: id
+    attributes:
+      label: Plan ID (if any)
+      placeholder: "MOB-004"
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal and acceptance criteria
+    validations:
+      required: true
+  - type: dropdown
+    id: backend
+    attributes:
+      label: Does this need a backend change?
+      options: ["No", "Yes: issue exists", "Yes: issue still to be opened", "Not sure"]
+    validations:
+      required: true
+  - type: input
+    id: backend-ref
+    attributes:
+      label: Backend issue (full reference)
+      placeholder: "A-Piyas-04/IUTverse#123"

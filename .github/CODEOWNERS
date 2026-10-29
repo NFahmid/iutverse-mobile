@@ -1,0 +1,5 @@
+# Default owner. Add the backend owner for API-facing paths once they are collaborators.
+*                       @NFahmid
+/docs/adr/              @NFahmid
+/docs/api-compatibility-policy.md @NFahmid
+/.github/               @NFahmid

@@ -1,0 +1,40 @@
+name: Bug report
+description: Something in the mobile app does not work
+labels: []
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: [Android, iOS, Both]
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version and environment
+      placeholder: "0.1.0 (staging)"
+  - type: input
+    id: device
+    attributes:
+      label: Device and OS version
+  - type: input
+    id: backend
+    attributes:
+      label: Related backend issue (full reference, if any)
+      placeholder: "A-Piyas-04/IUTverse#123"
+  - type: markdown
+    attributes:
+      value: Do not paste tokens, passwords or personal data.
